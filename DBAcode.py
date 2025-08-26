@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 # Título de la aplicación
-st.title("DBA: Plataforma de Inteligencia Empresarial")
+st.title("DBA: Plataformaaa de Inteligencia Empresarial")
 
 # Cargar datos (puedes conectar a una base de datos o usar un CSV)
 data = pd.DataFrame({
@@ -23,4 +23,5 @@ st.line_chart(data.set_index('Mes')[['Ventas', 'Gastos']])
 # Predicción simple (ejemplo)
 st.write("Predicción de Ventas para el Próximo Mes")
 prediccion = data['Ventas'].mean() * 1.1  # Ejemplo: aumento del 10%
+
 st.write(f"Ventas estimadas: ${prediccion:.2f}")
