@@ -1,27 +1,58 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.express as px
 
-# Título de la aplicación
-st.title("DBA: Plataformaaa de Inteligencia Empresarial")
+# Streamlit app title
+st.title("DBA Sales Insights Dashboard")
 
-# Cargar datos (puedes conectar a una base de datos o usar un CSV)
-data = pd.DataFrame({
-    'Mes': ['Enero', 'Febrero', 'Marzo', 'Abril'],
-    'Ventas': [20000, 25000, 30000, 28000],
-    'Gastos': [15000, 17000, 16000, 18000]
-})
+# File uploader for CSV
+uploaded_file = st.file_uploader("Upload your sales CSV file", type=["csv"])
 
-# Mostrar datos
-st.write("Datos de Ventas y Gastos")
-st.dataframe(data)
+if uploaded_file is not None:
+    # Read the CSV file
+    try:
+        df = pd.read_csv(uploaded_file)
+        
+        # Display raw data
+        st.subheader("Raw Sales Data")
+        st.write(df.head())
 
-# Visualización
-st.write("Gráfico de Ventas vs Gastos")
-st.line_chart(data.set_index('Mes')[['Ventas', 'Gastos']])
+        # Basic validation: check for required columns
+        required_columns = ["Date", "Product", "Sales"]
+        if not all(col in df.columns for col in required_columns):
+            st.error("CSV must contain 'Date', 'Product', and 'Sales' columns.")
+        else:
+            # Convert Date column to datetime
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+            
+            # Sales summary
+            st.subheader("Sales Summary")
+            total_sales = df["Sales"].sum()
+            avg_sales = df["Sales"].mean()
+            num_products = df["Product"].nunique()
+            
+            st.write(f"**Total Sales:** ${total_sales:,.2f}")
+            st.write(f"**Average Sale Amount:** ${avg_sales:,.2f}")
+            st.write(f"**Unique Products Sold:** {num_products}")
 
-# Predicción simple (ejemplo)
-st.write("Predicción de Ventas para el Próximo Mes")
-prediccion = data['Ventas'].mean() * 1.1  # Ejemplo: aumento del 10%
+            # Sales trend chart
+            st.subheader("Sales Trend Over Time")
+            df_grouped = df.groupby(df["Date"].dt.date)["Sales"].sum().reset_index()
+            fig = px.line(df_grouped, x="Date", y="Sales", title="Daily Sales Trend")
+            st.plotly_chart(fig)
 
-st.write(f"Ventas estimadas: ${prediccion:.2f}")
+            # Sales by product
+            st.subheader("Sales by Product")
+            product_sales = df.groupby("Product")["Sales"].sum().reset_index()
+            fig_product = px.bar(product_sales, x="Product", y="Sales", title="Sales by Product")
+            st.plotly_chart(fig_product)
+
+            # DBA-specific insight
+            st.subheader("DBA Insight")
+            top_product = product_sales.loc[product_sales["Sales"].idxmax(), "Product"]
+            st.write(f"**Recommendation:** Focus marketing efforts on **{top_product}**, as it has the highest sales volume.")
+            
+    except Exception as e:
+        st.error(f"Error processing file: {str(e)}")
+else:
+    st.info("Please upload a CSV file to see the sales summary and charts.")
